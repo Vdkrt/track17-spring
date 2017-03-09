@@ -2,7 +2,6 @@ package track.lessons.lesson1;
 
 import java.util.Scanner;
 import java.io.File;
-import java.io.*;
 
 /**
  * Задание 1: Реализовать два метода
