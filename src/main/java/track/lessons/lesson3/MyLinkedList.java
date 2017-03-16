@@ -6,7 +6,7 @@ import java.util.NoSuchElementException;
  * Должен наследовать List
  * Односвязный список
  */
-public class MyLinkedList extends List implements track.lessons.lesson3.Stack, track.lessons.lesson3.Queue{
+public class MyLinkedList extends List implements track.lessons.lesson3.Stack, track.lessons.lesson3.Queue {
 
     public MyLinkedList() {
         size = 0;
@@ -30,7 +30,8 @@ public class MyLinkedList extends List implements track.lessons.lesson3.Stack, t
         }
     }
 
-    private Node head, end;
+    private Node head;
+    private Node end;
 
     @Override
     public void add(int item) {
