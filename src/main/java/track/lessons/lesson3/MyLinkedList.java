@@ -6,7 +6,7 @@ import java.util.NoSuchElementException;
  * Должен наследовать List
  * Односвязный список
  */
-public class MyLinkedList extends List {
+public class MyLinkedList extends List implements track.lessons.lesson3.Stack, track.lessons.lesson3.Queue{
 
     public MyLinkedList() {
         size = 0;
@@ -33,7 +33,7 @@ public class MyLinkedList extends List {
     private Node head, end;
 
     @Override
-    void add(int item) {
+    public void add(int item) {
         if (size > 0) {
             Node current = new Node(end, null, item);
             end.next = current;
@@ -47,7 +47,7 @@ public class MyLinkedList extends List {
     }
 
     @Override
-    int remove(int idx) throws NoSuchElementException {
+    public int remove(int idx) throws NoSuchElementException {
         Node current = head;
         if (idx < 0 || idx >= size) {
             throw new NoSuchElementException();
@@ -77,7 +77,7 @@ public class MyLinkedList extends List {
     }
 
     @Override
-    int get(int idx) throws NoSuchElementException {
+    public int get(int idx) throws NoSuchElementException {
         Node current = head;
         if (idx < 0 || idx >= size || size == 0) {
             throw new NoSuchElementException();
@@ -87,5 +87,36 @@ public class MyLinkedList extends List {
             }
         }
         return current.val;
+    }
+
+
+    public void push(int value) {
+        this.add(value);
+    }
+
+    public int pop() throws NoSuchElementException {
+        int curVal;
+        if (size == 0) {
+            throw new NoSuchElementException();
+        } else {
+            curVal = this.get(size - 1);
+            this.remove(size - 1);
+        }
+        return curVal;
+    }
+
+    public void enqueue(int value) {
+        this.add(value);
+    }
+
+    public int dequeu() throws NoSuchElementException {
+        int curVal;
+        if (size == 0) {
+            throw new NoSuchElementException();
+        } else {
+            curVal = this.get(0);
+            this.remove(0);
+        }
+        return curVal;
     }
 }

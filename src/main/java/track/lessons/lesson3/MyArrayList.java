@@ -26,7 +26,7 @@ public class MyArrayList extends List {
     }
 
     @Override
-    void add(int item) {
+    public void add(int item) {
         if (size > 0) {
             int[] buffer = array;
             size++;
@@ -41,7 +41,7 @@ public class MyArrayList extends List {
     }
 
     @Override
-    int remove(int idx) throws NoSuchElementException {
+    public int remove(int idx) throws NoSuchElementException {
         if (idx >= 0 && idx < size) {
             int[] buffer = array;
             size--;
@@ -55,7 +55,7 @@ public class MyArrayList extends List {
     }
 
     @Override
-    int get(int idx) throws NoSuchElementException {
+    public int get(int idx) throws NoSuchElementException {
         if (idx >= 0 && idx < size) {
             return array[idx];
         } else {
