@@ -14,7 +14,7 @@ public class MyArrayList extends List {
 
     public MyArrayList() {
         size = 0;
-        array = new int[0];
+        array = new int[10];
     }
 
     public MyArrayList(int capacity) {
@@ -27,27 +27,21 @@ public class MyArrayList extends List {
 
     @Override
     public void add(int item) {
-        if (size > 0) {
+        if (size + 1 > array.length) {
             int[] buffer = array;
-            size++;
-            array = new int[size];
-            System.arraycopy(buffer, 0, array, 0, size - 1);
-            array[size - 1] = item;
-        } else {
-            size = 1;
-            array = new int[1];
-            array[0] = item;
+            array = new int[2 * size];
+            System.arraycopy(buffer, 0, array, 0, size);
         }
+        size++;
+        array[size - 1] = item;
     }
 
     @Override
     public int remove(int idx) throws NoSuchElementException {
         if (idx >= 0 && idx < size) {
-            int[] buffer = array;
+            System.arraycopy(array, idx + 1, array, idx, size - idx);
             size--;
-            array = new int[size];
-            System.arraycopy(buffer, 0, array, 0, idx);
-            System.arraycopy(buffer, idx + 1, array, idx, size - idx);
+            array[size] = 0;
         } else {
             throw new NoSuchElementException();
         }
