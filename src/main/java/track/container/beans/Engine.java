@@ -1,5 +1,8 @@
 package track.container.beans;
 
+import track.container.config.Property;
+
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -9,6 +12,10 @@ public class Engine {
     private int power;
 
     public Engine() {
+    }
+
+    public Engine(Property properties) {
+        this.power = Integer.parseInt(properties.getValue());
     }
 
     public int getPower() {

@@ -1,5 +1,7 @@
 package track.container.beans;
 
+import track.container.config.Property;
+
 import java.util.Objects;
 
 /**
@@ -11,6 +13,9 @@ public class Gear {
     public Gear() {
     }
 
+    public Gear(Property properties) {
+        this.count = Integer.parseInt(properties.getValue());
+    }
     public int getCount() {
         return count;
     }
