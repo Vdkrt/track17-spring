@@ -1,16 +1,9 @@
 package track.container;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import track.container.config.Bean;
-import track.container.config.InvalidConfigurationException;
-import track.container.config.Property;
-import track.container.config.ValueType;
+import track.container.config.*;
 
 /**
  * Основной класс контейнера
@@ -19,75 +12,96 @@ import track.container.config.ValueType;
 public class Container {
     private HashMap<String, Object> objById;
     private HashMap<String, Object> objByClassName;
-    private boolean cycle;
+    private HashMap<String, ArrayList<String>> familyGraph;
 
-    private class Node {
-        private Bean bean;
-        private int parents;
-        private int children;
-        private boolean created;
+    private void initiateContainer(List<Bean> beans) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+            for (Bean bean : beans) {
+                Class klass = Class.forName(bean.getClassName());
+                //Constructor konstr = klass.getConstructor();
+                Object object;
+                if (objById.containsKey(bean.getId())) {
+                    object = objById.get(bean.getId());
+                } else {
+                    object = klass.newInstance();
+                }
+                Map<String, Property> properties = bean.getProperties();
+                Field[] fields = klass.getDeclaredFields();
+                for (Field field : fields) {
+                    if (properties.containsKey(field.getName())) {
+                        field.setAccessible(true);
+                        if (properties.get(field.getName()).getType() == ValueType.VAL) {
+                            int value = Integer.parseInt(properties.get(field.getName()).getValue());
+                            field.set(object, value);
+                            ArrayList<String> childList = new ArrayList<>();
+                            if (familyGraph.containsKey(bean.getId())) {
+                                childList = familyGraph.get(bean.getId());
+                                childList.add(properties.get(field.getName()).getValue());
+                            } else {
+                                childList.add(properties.get(field.getName()).getValue());
+                                familyGraph.put(bean.getId(), childList);
+                            }
+                        } else {
+                            if (objById.containsKey(properties.get(field.getName()).getValue())) {
+                                field.set(object, objById.get(properties.get(field.getName()).getValue()));
+                            } else {
+                                String className = properties.get(field.getName()).getName();
+                                Class child = Class.forName("track.container.beans." + className.substring(0, 1).toUpperCase() + className.substring(1));
+                                Object childObj = child.newInstance();
+                                field.set(object, childObj);
+                                String childId = properties.get(field.getName()).getValue();
+                                objById.put(childId, childObj);
+                            }
+                        }
+                    }
+                }
+                objById.putIfAbsent(bean.getId(), object);
+                objByClassName.putIfAbsent(bean.getClassName(), object);
+            }
 
-        private Node(Bean bean) {
-            this.bean = bean;
-            this.parents = 0;
-            this.children = 0;
-            this.created = true;
-        }
-
-        private Node(Bean bean, int parents) {
-            this.bean = bean;
-            this.parents = parents;
-            this.children = 0;
-            this.created = true;
-        }
     }
 
-    private Node head;
-
-
-    // Реализуйте этот конструктор, используется в тестах!
-
-
-    public Container(List<Bean> beans) throws InvalidConfigurationException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        objById = new HashMap<>();
-        objByClassName = new HashMap<>();
-        for (Bean bean : beans) {
-            Class klass = Class.forName(bean.getClassName());
-            //Constructor konstr = klass.getConstructor();
-            Object object;
-            byte removeKey = 0;
-            if (objById.containsKey(bean.getId())) {
-                object = objById.get(bean.getId());
-                removeKey = 1;
-            } else {
-                object = klass.newInstance();
-            }
-            Map<String, Property> properties = bean.getProperties();
-            Field[] fields = klass.getDeclaredFields();
-            for (Field field : fields) {
-                field.setAccessible(true);
-                if (properties.get(field.getName()).getType() == ValueType.VAL) {
-                    int value = Integer.parseInt(properties.get(field.getName()).getValue());
-                    field.set(object, value);
-                } else {
-                    if (objById.containsKey(properties.get(field.getName()).getValue())) {
-                        field.set(object, objById.get(properties.get(field.getName()).getValue()));
-                    } else {
-                        String className = properties.get(field.getName()).getName();
-                        Class child = Class.forName("track.container.beans." + className.substring(0,1).toUpperCase() + className.substring(1));
-                        Object childObj = child.newInstance();
-                        field.set(object, childObj);
-                        String childId = properties.get(field.getName()).getValue();
-                        objById.put(childId, childObj);
+    public boolean cycleCheck() {
+        int cycles = 1;
+        for (int i = 0; i < cycles; i++) {
+            for (Map.Entry<String, ArrayList<String>> entry : familyGraph.entrySet()) {
+                for (String child : entry.getValue()) {
+                    if (entry.getKey().equals(child)) {
+                        return true;
+                    } else if (familyGraph.containsKey(child)) {
+                        ArrayList<String> childList = familyGraph.get(child);
+                        ArrayList<String> parentList = familyGraph.get(entry.getKey());
+                        if (!childList.isEmpty()) {
+                            int indicator = 0;
+                            for (String grandChild : childList) {
+                                if (!parentList.contains(grandChild)) {
+                                    indicator += 1;
+                                    parentList.add(grandChild);
+                                }
+                            }
+                            if (indicator > 0) {
+                                cycles += 1;
+                            }
+                        }
                     }
                 }
             }
-            if (removeKey == 1) {
-                objById.remove(bean.getId());
-                objByClassName.remove(bean.getClassName());
-            }
-            objById.put(bean.getId(), object);
-            objByClassName.put(bean.getClassName(), object);
+        }
+        return false;
+    }
+
+    // Реализуйте этот конструктор, используется в тестах!
+
+    public Container(List<Bean> beans) throws InvalidConfigurationException{
+        objById = new HashMap<>();
+        objByClassName = new HashMap<>();
+        familyGraph = new HashMap<>();
+        try {
+            initiateContainer(beans);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException except) {
+            except.printStackTrace();
+        }
+        if (cycleCheck()) {
+            throw new InvalidConfigurationException("Cycles in configuration");
         }
     }
 
