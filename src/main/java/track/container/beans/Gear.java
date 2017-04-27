@@ -13,12 +13,6 @@ public class Gear {
     public Gear() {
     }
 
-    public Gear(Property properties) {
-        this.count = Integer.parseInt(properties.getValue());
-    }
-    public int getCount() {
-        return count;
-    }
 
     public void setCount(int count) {
         this.count = count;

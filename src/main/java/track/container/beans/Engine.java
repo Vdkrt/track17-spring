@@ -14,9 +14,6 @@ public class Engine {
     public Engine() {
     }
 
-    public Engine(Property properties) {
-        this.power = Integer.parseInt(properties.getValue());
-    }
 
     public int getPower() {
         return power;

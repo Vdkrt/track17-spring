@@ -6,6 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import track.container.beans.Car;
+import track.container.beans.Engine;
 import track.container.beans.Gear;
 import track.container.config.Bean;
 import track.container.JsonConfigReader;
@@ -36,13 +37,15 @@ public class Main {
 //        car = (Car) container.getById("carBean");
         ConfigReader jsonConfig = new JsonConfigReader();
         List<Bean> list = jsonConfig.parseBeans(new File("src/main/resources/config.json"));
-        System.out.print(list);
+        //System.out.print(list);
 
         Container container = new Container(list);
-        Gear gear = (Gear) container.getByClass("track.container.beans.Gear");
-        //Gear gear = (Gear) container.getById("gear");
-        System.out.print(gear);
-
-
+        //Gear gear = (Gear) container.getByClass("track.container.beans.Gear");
+        Gear gear = (Gear) container.getById("gearBean");
+        Car car = (Car) container.getById("carBean");
+        Engine engine = (Engine) container.getById("engineBean");
+        System.out.println(gear);
+        System.out.println(car);
+        System.out.println(engine);
     }
 }
