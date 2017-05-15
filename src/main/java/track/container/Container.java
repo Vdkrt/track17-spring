@@ -14,53 +14,82 @@ public class Container {
     private HashMap<String, Object> objByClassName;
     private HashMap<String, ArrayList<String>> familyGraph;
 
-    private void initiateContainer(List<Bean> beans) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-            for (Bean bean : beans) {
-                Class klass = Class.forName(bean.getClassName());
-                //Constructor konstr = klass.getConstructor();
-                Object object;
-                if (objById.containsKey(bean.getId())) {
-                    object = objById.get(bean.getId());
-                } else {
-                    object = klass.newInstance();
-                }
-                Map<String, Property> properties = bean.getProperties();
-                Field[] fields = klass.getDeclaredFields();
-                for (Field field : fields) {
-                    if (properties.containsKey(field.getName())) {
-                        field.setAccessible(true);
-                        if (properties.get(field.getName()).getType() == ValueType.VAL) {
+    private void initiateContainer(List<Bean> beans) throws ClassNotFoundException, IllegalAccessException, InstantiationException, InvalidConfigurationException {
+        for (Bean bean : beans) {
+            Class klass = Class.forName(bean.getClassName());
+            Object object;
+            if (objById.containsKey(bean.getId())) {
+                object = objById.get(bean.getId());
+            } else {
+                object = klass.newInstance();
+            }
+            Map<String, Property> properties = bean.getProperties();
+            Field[] fields = klass.getDeclaredFields();
+            for (Field field : fields) {
+                if (properties.containsKey(field.getName())) {
+                    field.setAccessible(true);
+                    if (properties.get(field.getName()).getType() == ValueType.VAL) {
+                        if (field.getType() == int.class) {
                             int value = Integer.parseInt(properties.get(field.getName()).getValue());
                             field.set(object, value);
-                            ArrayList<String> childList = new ArrayList<>();
-                            if (familyGraph.containsKey(bean.getId())) {
-                                childList = familyGraph.get(bean.getId());
-                                childList.add(properties.get(field.getName()).getValue());
-                            } else {
-                                childList.add(properties.get(field.getName()).getValue());
-                                familyGraph.put(bean.getId(), childList);
+                        } else if (field.getType() == long.class) {
+                            long value = Long.parseLong(properties.get(field.getName()).getValue());
+                            field.set(object, value);
+                        } else if (field.getType() == double.class) {
+                            double value = Double.parseDouble(properties.get(field.getName()).getValue());
+                            field.set(object, value);
+                        } else if (field.getType() == float.class) {
+                            float value = Float.parseFloat(properties.get(field.getName()).getValue());
+                            field.set(object, value);
+                        } else if (field.getType() == boolean.class) {
+                            boolean value = Boolean.parseBoolean(properties.get(field.getName()).getValue());
+                            field.set(object, value);
+                        } else if (field.getType() == short.class) {
+                            short value = Short.parseShort(properties.get(field.getName()).getValue());
+                            field.set(object, value);
+                        } else {
+                            throw new IllegalArgumentException();
+                        }
+
+                        ArrayList<String> childList = new ArrayList<>();
+                        if (familyGraph.containsKey(bean.getId())) {
+                            childList = familyGraph.get(bean.getId());
+                            childList.add(properties.get(field.getName()).getValue());
+                        } else {
+                            childList.add(properties.get(field.getName()).getValue());
+                            familyGraph.put(bean.getId(), childList);
+                        }
+                    } else {
+                        if (objById.containsKey(properties.get(field.getName()).getValue())) {
+                            try {
+                                field.set(object, objById.get(properties.get(field.getName()).getValue()));
+                            } catch (IllegalArgumentException err) {
+                                err.printStackTrace();
                             }
                         } else {
-                            if (objById.containsKey(properties.get(field.getName()).getValue())) {
-                                field.set(object, objById.get(properties.get(field.getName()).getValue()));
-                            } else {
-                                String className = properties.get(field.getName()).getName();
-                                Class child = Class.forName("track.container.beans." + className.substring(0, 1).toUpperCase() + className.substring(1));
-                                Object childObj = child.newInstance();
+                            String className = properties.get(field.getName()).getName();
+                            String classString = className.substring(0, 1).toUpperCase() + className.substring(1);
+                            Class child = Class.forName("track.container.beans." + classString);
+                            Object childObj = child.newInstance();
+                            try {
                                 field.set(object, childObj);
-                                String childId = properties.get(field.getName()).getValue();
-                                objById.put(childId, childObj);
+                            } catch (IllegalArgumentException err) {
+                                err.printStackTrace();
                             }
+                            String childId = properties.get(field.getName()).getValue();
+                            objById.put(childId, childObj);
                         }
                     }
                 }
-                objById.putIfAbsent(bean.getId(), object);
-                objByClassName.putIfAbsent(bean.getClassName(), object);
             }
+            objById.putIfAbsent(bean.getId(), object);
+            objByClassName.putIfAbsent(bean.getClassName(), object);
+        }
 
     }
 
-    public boolean cycleCheck() {
+
+    private boolean cycleCheck() {
         int cycles = 1;
         for (int i = 0; i < cycles; i++) {
             for (Map.Entry<String, ArrayList<String>> entry : familyGraph.entrySet()) {
@@ -91,7 +120,7 @@ public class Container {
 
     // Реализуйте этот конструктор, используется в тестах!
 
-    public Container(List<Bean> beans) throws InvalidConfigurationException{
+    public Container(List<Bean> beans) throws InvalidConfigurationException {
         objById = new HashMap<>();
         objByClassName = new HashMap<>();
         familyGraph = new HashMap<>();
